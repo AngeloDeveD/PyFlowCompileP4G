@@ -1,0 +1,11 @@
+import("original_comu00.bf");
+import("patch_comu00.msg");
+
+void SCR_ONLY_NPC_YOUSUKE_softhook()
+{
+    OPEN_MSG_WIN();
+    MSG(MOD_COMU00_HOOK_HELLO);
+    CLOSE_MSG_WIN();
+    SCR_ONLY_NPC_YOUSUKE_unhooked();
+    return;
+}

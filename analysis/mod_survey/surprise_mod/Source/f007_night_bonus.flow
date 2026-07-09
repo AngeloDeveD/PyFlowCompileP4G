@@ -1,0 +1,44 @@
+import("original_f007.bf");
+import("f007_night_bonus.msg");
+
+void call_lmap_hook()
+{
+    int selectedOption;
+
+    if (GET_TIME_OF_DAY() != 5)
+    {
+        call_lmap_unhooked();
+        return;
+    }
+
+    OPEN_MSG_WIN();
+    MSG(MOD_NIGHT_BONUS_NOTE);
+    SEL_CHK_PAD(14, 3);
+    selectedOption = SEL(MOD_NIGHT_BONUS_SEL);
+    CLOSE_MSG_WIN();
+
+    if (selectedOption == 0)
+    {
+        ADD_YEN(3000);
+        OPEN_MSG_WIN();
+        MSG(MOD_NIGHT_BONUS_YEN);
+        CLOSE_MSG_WIN();
+    }
+    else if (selectedOption == 1)
+    {
+        GET_SOCIAL_STATS(SocialStat.Courage, 5);
+        OPEN_MSG_WIN();
+        MSG(MOD_NIGHT_BONUS_COURAGE);
+        CLOSE_MSG_WIN();
+    }
+    else if (selectedOption == 2)
+    {
+        GET_SOCIAL_STATS(SocialStat.Knowledge, 5);
+        OPEN_MSG_WIN();
+        MSG(MOD_NIGHT_BONUS_KNOWLEDGE);
+        CLOSE_MSG_WIN();
+    }
+
+    call_lmap_unhooked();
+    return;
+}

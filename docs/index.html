@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P4GScript Academy</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="academy">
+  <div class="site-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">P4</div>
+        <h1>P4GScript Academy</h1>
+        <p>Большой учебник по pyFlowCompile: от нуля до рабочего мода Persona 4 Golden.</p>
+      </div>
+
+      <div class="sidebar-group">
+        <p class="sidebar-label">Обучение</p>
+        <nav class="sidebar-nav">
+          <a href="#hero">Старт</a>
+          <a href="#why-library">Зачем библиотека</a>
+          <a href="#prerequisites">Подготовка</a>
+          <a href="#glossary">Словарь</a>
+          <a href="#how-game-calls">Как игра вызывает код</a>
+          <a href="#start-here">С чего начать</a>
+          <a href="#follow-along">Практикум: первый файл</a>
+          <a href="#project-model">Как устроен проект</a>
+          <a href="#python-style">Короткий Python-стиль</a>
+          <a href="#safety-modes">Режимы safety</a>
+          <a href="#lesson-1">Урок 1. Первый рабочий мод</a>
+          <a href="#lesson-2">Урок 2. Hook в field-скрипт</a>
+          <a href="#lesson-3">Урок 3. Сообщения и выборы</a>
+          <a href="#lesson-4">Урок 4. Bits и условия</a>
+          <a href="#lesson-5">Урок 5. Build и установка</a>
+          <a href="#debugging">Почему мод не сработал</a>
+          <a href="#next-steps">Куда расти дальше</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-group">
+        <p class="sidebar-label">Навигация</p>
+        <div class="sidebar-links">
+          <a href="reference.html">Открыть справочник API</a>
+        </div>
+      </div>
+
+      <div class="sidebar-tip">
+        <strong>Главная мысль</strong>
+        <p>Скомпилировать <span class="inline-code">.bf</span> недостаточно. Нужно понять, какая игровая процедура реально будет вызвана и как твой код в неё встраивается.</p>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <section class="hero" id="hero">
+          <div class="eyebrow">Учебник для новичка, а не памятка для опытного автора</div>
+          <h1>Как писать моды для Persona 4 Golden на pyFlowCompile так, чтобы ты думал о моде, а не о рутине компилятора.</h1>
+          <p>Моддинг скриптов P4G быстро превращается в рутину: достать оригинальный <span class="inline-code">.bf</span>, декомпилировать его, найти нужную процедуру, не сломать <span class="inline-code">.msg</span>, не перепутать bits, заново собрать файл и положить его в правильный путь мода. pyFlowCompile оставляет эту механику под капотом: ты описываешь намерение на Python, а библиотека генерирует <span class="inline-code">.flow</span>, <span class="inline-code">.msg</span> и вызывает AtlusScriptTools.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#why-library">Начать обучение</a>
+            <a class="button secondary" href="reference.html">Открыть справочник функций</a>
+          </div>
+          <div class="hero-meta">
+            <article class="stat-card">
+              <span>Фокус</span>
+              <h3>Обучение с нуля</h3>
+              <p>Не просто список методов, а пошаговое объяснение того, что делает игра и как библиотека в это вмешивается.</p>
+            </article>
+            <article class="stat-card">
+              <span>Результат</span>
+              <h3>Рабочие сценарии</h3>
+              <p>В уроках используются реальные точки входа, которые подходят как smoke-test для первого мода.</p>
+            </article>
+            <article class="stat-card">
+              <span>Отдельно</span>
+              <h3>API как справочник</h3>
+              <p>Если потом понадобится только одна функция или переменная, переходишь в reference и читаешь адресно.</p>
+            </article>
+          </div>
+        </section>
+
+
+        <section class="doc-section" id="why-library">
+          <h2>Зачем вообще нужна эта библиотека</h2>
+          <p class="lead">Без pyFlowCompile даже маленькая реплика в Persona 4 Golden требует много ручной работы. Нужно найти оригинальный script container, декомпилировать его, понять, какая процедура реально вызывается игрой, вручную добавить FlowScript и MessageScript, затем снова собрать <span class="inline-code">.bf</span> и проверить, что mod loader подхватил именно этот файл.</p>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Как выглядит боль без Python-слоя</h3>
+              <ol class="step-list">
+                <li>
+                  <strong>Найти оригинальный файл</strong>
+                  Например, понять, что домашняя field-логика лежит не в абстрактном “home script”, а в конкретном <span class="inline-code">f007.bf</span> или другом container.
+                </li>
+                <li>
+                  <strong>Декомпилировать и прочитать исходники</strong>
+                  Получить <span class="inline-code">.flow</span>, <span class="inline-code">.msg</span> и иногда <span class="inline-code">.msg.h</span>, затем найти нужную процедуру среди десятков похожих имён.
+                </li>
+                <li>
+                  <strong>Не ошибиться в служебных деталях</strong>
+                  Указать правильную кодировку, не сломать message tags, не занять чужой bit, не забыть вызвать оригинальную процедуру после hook.
+                </li>
+                <li>
+                  <strong>Собрать и положить в правильный путь</strong>
+                  Итоговый <span class="inline-code">.bf</span> должен оказаться именно там, где игра ожидает этот script container.
+                </li>
+              </ol>
+            </article>
+            <article class="panel">
+              <h3>Что меняется с pyFlowCompile</h3>
+              <p>Ты пишешь обычный Python-файл: создаёшь проект, описываешь сообщение, выбираешь реальную процедуру игры и вызываешь <span class="inline-code">Build()</span>. Библиотека сама создаёт <span class="inline-code">.flow</span> и <span class="inline-code">.msg</span>, вызывает bundled AtlusScriptTools и сохраняет результат в build-папку.</p>
+              <div class="code-block">
+                <pre><code class="language-python">hook = project.replace_hook("everymorning")
+hook.call_original()
+hook.say(Speaker.NANAKO, "Привет. Этот мод реально вызвался утром.")</code></pre>
+              </div>
+              <p>Это не магия и не отдельный движок. Это более удобный способ написать тот же сценарный код, который в итоге станет понятным для P4G.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="doc-section" id="prerequisites">
+          <h2>Что подготовить перед первым уроком</h2>
+          <p class="lead">Перед кодом нужно убедиться, что окружение готово. Так новичок не будет путать ошибку установки с ошибкой мода.</p>
+
+          <div class="card-grid section-stack">
+            <article class="doc-card">
+              <h3>Python и библиотека</h3>
+              <p>Нужен установленный Python и доступ к пакету <span class="inline-code">p4gscript</span>. Если работаешь прямо из репозитория, запускай примеры с <span class="inline-code">$env:PYTHONPATH="src"</span>. В пользовательском проекте библиотеку лучше установить как пакет.</p>
+            </article>
+            <article class="doc-card">
+              <h3>Оригинальный .bf</h3>
+              <p>Patch-мод всегда опирается на оригинальный файл игры. Для первого урока положи <span class="inline-code">scheduler_01.bf</span> рядом с Python-скриптом. Этот файл берётся из данных игры после распаковки или из подготовленной рабочей папки с оригинальными скриптами.</p>
+            </article>
+            <article class="doc-card">
+              <h3>AtlusScriptTools</h3>
+              <p>Пользователю не нужно искать компилятор в системном PATH Windows. Библиотека использует bundled AtlusScriptTools из проекта и вызывает его во время <span class="inline-code">Build()</span>.</p>
+            </article>
+          </div>
+
+          <div class="callout info section-stack">
+            <h3>Проверка перед стартом</h3>
+            <p>Создай папку для учебного мода, положи туда <span class="inline-code">hello_scheduler.py</span> и оригинальный <span class="inline-code">scheduler_01.bf</span>. Если Python не видит <span class="inline-code">p4gscript</span>, сначала исправь запуск библиотеки, а уже потом переходи к логике мода.</p>
+          </div>
+        </section>
+
+        <section class="doc-section" id="glossary">
+          <h2>Мини-словарь перед кодом</h2>
+          <p class="lead">Эти слова будут встречаться постоянно. Не нужно запоминать внутренности игры сразу, но важно понимать, кто читает каждый файл и зачем он нужен.</p>
+
+          <div class="table-wrap section-stack">
+            <table>
+              <thead>
+                <tr>
+                  <th>Термин</th>
+                  <th>Что это</th>
+                  <th>Кто читает</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="inline-code">.bf</span></td>
+                  <td>Скомпилированный контейнер скрипта Persona 4 Golden.</td>
+                  <td>Игра.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">.flow</span></td>
+                  <td>Человекочитаемая логика: процедуры, условия, вызовы функций, hooks.</td>
+                  <td>Компилятор AtlusScriptTools.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">.msg</span></td>
+                  <td>Текстовые ресурсы: реплики, help-сообщения, варианты выбора.</td>
+                  <td>Компилятор AtlusScriptTools.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">procedure</span></td>
+                  <td>Функция внутри FlowScript, которую игра или другой скрипт может вызвать.</td>
+                  <td>Игра во время исполнения script container.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">hook</span></td>
+                  <td>Перехват существующей процедуры: твой код выполняется в точке, которую игра уже вызывает.</td>
+                  <td>Компилятор hook-режима и игра.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">bit</span></td>
+                  <td>Переключатель 0/1, через который игра и моды запоминают состояние.</td>
+                  <td>Скриптовая логика игры.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+<section class="doc-section" id="how-game-calls">
+          <h2>Как игра вообще вызывает код</h2>
+          <p class="lead">Чтобы писать моды уверенно, нужно отделить три разных вещи: где лежит скрипт, какая процедура внутри него тебя интересует и при каком игровом действии эта процедура реально запускается.</p>
+
+          <div class="path-grid section-stack">
+            <article class="path-card">
+              <span>1</span>
+              <h3>.bf</h3>
+              <p>Это контейнер скрипта, который загружает игра. Внутри него находятся скомпилированные данные FlowScript и MessageScript.</p>
+            </article>
+            <article class="path-card">
+              <span>2</span>
+              <h3>.flow</h3>
+              <p>Это логика: процедуры, вызовы функций игры, условия, переходы, hooks и работа с bits или counters.</p>
+            </article>
+            <article class="path-card">
+              <span>3</span>
+              <h3>.msg</h3>
+              <p>Это сообщения, реплики, выборы и текстовые блоки. FlowScript обращается к ним через <span class="inline-code">MSG(...)</span> и <span class="inline-code">SEL(...)</span>.</p>
+            </article>
+            <article class="path-card">
+              <span>4</span>
+              <h3>Игровой вызов</h3>
+              <p>Это конкретная процедура, которую игра вызывает в нужный момент. Именно она определяет, сработает твой код или нет.</p>
+            </article>
+          </div>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Ментальная схема</h3>
+              <ol class="step-list">
+                <li>
+                  <strong>Игрок делает действие</strong>
+                  Игра доходит до нужного сценарного места: утро, вход в локацию, разговор с NPC, открытие меню, запуск катсцены.
+                </li>
+                <li>
+                  <strong>Движок выбирает script container</strong>
+                  Например scheduler-скрипт, field-скрипт конкретной карты или event-скрипт сценки.
+                </li>
+                <li>
+                  <strong>Внутри container вызывается процедура</strong>
+                  Например <span class="inline-code">everymorning()</span> или <span class="inline-code">call_lmap()</span>.
+                </li>
+                <li>
+                  <strong>Hook меняет маршрут исполнения</strong>
+                  Если библиотека сгенерировала <span class="inline-code">target_hook()</span>, компилятор связывает его с оригинальной процедурой.
+                </li>
+                <li>
+                  <strong>Твой код выполняется</strong>
+                  Либо вместо оригинала, либо до него, либо после него, в зависимости от режима hook.
+                </li>
+              </ol>
+            </article>
+            <article class="panel">
+              <h3>Почему это критично</h3>
+              <p>Если ты просто создашь новую процедуру <span class="inline-code">main()</span> внутри нового скрипта, игра не обязана её когда-либо вызвать. В Persona 4 Golden код живёт не по правилу «главная функция запускается автоматически», а по правилу «игра вызывает только то, что знает по своей логике».</p>
+              <div class="info-strip">
+                <span class="badge core">Hook = встроиться в уже вызываемую процедуру</span>
+                <span class="badge standard">Standalone script = нужен отдельный путь вызова</span>
+              </div>
+            </article>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Тип скрипта</th>
+                  <th>О чём он обычно</th>
+                  <th>Когда подходит новичку</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="inline-code">scheduler_*.bf</span></td>
+                  <td>Глобальные ежедневные процессы, календарные обновления, переходы между частями дня.</td>
+                  <td>Для первого надёжного smoke-test, потому что есть понятные точки входа вроде <span class="inline-code">everymorning()</span>.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">field/script/*.bf</span></td>
+                  <td>Поведение конкретной карты, входы-выходы, локальные события, NPC и логика локации.</td>
+                  <td>Когда ты уже понимаешь, какое действие игрока должно активировать мод.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">event/*.bf</span></td>
+                  <td>Катсцены, большие сценарные цепочки, сложные ветки и постановочные последовательности.</td>
+                  <td>Позже, когда уже умеешь читать call chain и смотреть зависимости между процедурами.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+                <section class="doc-section" id="start-here">
+          <h2>С чего начать</h2>
+          <p class="lead">Первый мод лучше писать не от метода библиотеки, а от игровой задачи. Формулировка должна звучать так: “Я хочу, чтобы в такой-то момент игры произошло такое-то действие”. Потом мы ищем script container и процедуру, которую игра уже вызывает в этот момент.</p>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Учебная задача</h3>
+              <p>В первом уроке мы сделаем маленький smoke-test: один раз утром показать сообщение от Нанако. Это хороший первый сценарий, потому что утренний scheduler вызывается самой игрой стабильно, а результат легко заметить.</p>
+              <ol class="step-list">
+                <li>
+                  <strong>Момент в игре</strong>
+                  Утреннее обновление дня.
+                </li>
+                <li>
+                  <strong>Оригинальный файл</strong>
+                  <span class="inline-code">scheduler_01.bf</span>, который нужно положить рядом с Python-скриптом.
+                </li>
+                <li>
+                  <strong>Процедура</strong>
+                  <span class="inline-code">everymorning()</span>, потому что она относится к ежедневной утренней логике.
+                </li>
+                <li>
+                  <strong>Поведение мода</strong>
+                  Сначала дать игре выполнить оригинальную утреннюю логику, затем один раз показать нашу реплику.
+                </li>
+              </ol>
+            </article>
+            <article class="panel">
+              <h3>Почему не начинаем с нового .bf</h3>
+              <p>Новый script container сам по себе не запускается. Для первого урока надёжнее патчить уже существующий <span class="inline-code">.bf</span>, потому что игра уже знает, когда вызывать его процедуры. Так мы проверяем именно рабочий маршрут: original script -> hook -> наш код -> original script.</p>
+            </article>
+          </div>
+
+          <div class="callout warn section-stack">
+            <h3>Самое важное предупреждение</h3>
+            <p><span class="inline-code">Empty()</span> и create-mode пригодятся позже, когда ты уже понимаешь, кто вызовет новый script container. В первых уроках держимся patch-mode: берём оригинальный файл, аккуратно встраиваемся в реальную процедуру и не пытаемся заставить игру угадать, где лежит новый код.</p>
+          </div>
+        </section>
+        <section class="doc-section" id="follow-along">
+          <h2>Практикум. Напиши первый файл вместе с уроком</h2>
+          <p class="lead">Перед большой теорией полезно один раз пройти весь путь руками: создать Python-файл, импортировать нужные объекты, подключить оригинальный <span class="inline-code">.bf</span>, добавить hook, собрать мод и понять, где он должен лежать в Reloaded II.</p>
+
+          <div class="callout info section-stack">
+            <h3>Главная картина перед кодом</h3>
+            <p>Игра не запускает твой Python-файл. Python нужен только на этапе сборки: ты запускаешь скрипт, библиотека генерирует <span class="inline-code">.flow</span> и <span class="inline-code">.msg</span>, AtlusScriptTools компилирует их в новый <span class="inline-code">.bf</span>, а уже этот <span class="inline-code">.bf</span> читает Persona 4 Golden.</p>
+            <div class="code-block">
+              <pre><code class="language-text">nanako_evening_follow_along.py
+  -> generated .flow / .msg
+  -> AtlusScriptTools
+  -> patched f007.bf
+  -> Reloaded II подменяет оригинальный файл
+  -> игра доходит до select_nanako_okaeri()
+  -> hook показывает твой help_msg и диалог</code></pre>
+            </div>
+            <p>Если build прошёл, это доказывает только то, что файл собрался. Чтобы увидеть результат в игре, нужно ещё правильно заменить игровой <span class="inline-code">f007.bf</span> и попасть в тот сценарий, где игра вызывает нужную процедуру.</p>
+          </div>
+
+          <div class="table-wrap section-stack">
+            <table>
+              <thead>
+                <tr>
+                  <th>Что встречается в уроке</th>
+                  <th>Что это означает</th>
+                  <th>Почему без этого не обойтись</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="inline-code">nanako_evening_follow_along.py</span></td>
+                  <td>Твой исходный Python-файл.</td>
+                  <td>В нём ты описываешь мод понятным кодом библиотеки.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">f007.bf</span></td>
+                  <td>Оригинальный домашний field script игры.</td>
+                  <td>Мы патчим существующий файл, потому что игра уже знает, когда его загружать.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">P4GProject</span></td>
+                  <td>Объект сборки.</td>
+                  <td>Он хранит source, hooks, messages, bits и настройки будущего build.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">hook</span></td>
+                  <td>Встраивание в уже существующую процедуру.</td>
+                  <td>Без hook новый код может просто лежать в файле и никогда не выполниться.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">bit</span></td>
+                  <td>Флаг 0/1 внутри скриптовой логики.</td>
+                  <td>Он запоминает, что сообщение уже показано, и защищает от повторов.</td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">Build(Debug=True)</span></td>
+                  <td>Запуск генерации и компиляции.</td>
+                  <td>После него появляются файлы, которые можно ставить в мод.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn section-stack">
+            <h3>Что именно будет проверяться в игре</h3>
+            <p>Практикум патчит домашний field script <span class="inline-code">f007.bf</span> и hook-процедуру <span class="inline-code">select_nanako_okaeri</span>. Это не “любой разговор с Нанако”, а конкретная ветка домашней логики, до которой игра доходит вечером в подходящем сценарии возвращения/общения дома.</p><p>Здесь есть два разных результата. Первый результат — build создал <span class="inline-code">.flow</span>, <span class="inline-code">.msg</span> и <span class="inline-code">.bf</span>. Второй результат — игра реально дошла до <span class="inline-code">select_nanako_okaeri()</span> и выполнила hook. Если ты проверяешь другой разговор, другой день или другую локацию, первый результат может быть успешным, а второй не произойдёт.</p>
+          </div>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Что подготовить</h3>
+              <ol class="step-list">
+                <li><strong>Создай файл</strong> <span class="inline-code">nanako_evening_follow_along.py</span>. В репозитории такой пример уже лежит в <span class="inline-code">examples/</span>.</li>
+                <li><strong>Положи рядом оригинальный</strong> <span class="inline-code">f007.bf</span>. Для примера из репозитория путь будет <span class="inline-code">examples/f007.bf</span>.</li>
+                <li><strong>Запускай из окружения, где виден</strong> <span class="inline-code">p4gscript</span>. Если запускаешь прямо из репозитория, перед запуском укажи <span class="inline-code">$env:PYTHONPATH="src"</span>.</li>
+              </ol>
+            </article>
+            <article class="panel">
+              <h3>Какие импорты нужны</h3>
+              <div class="code-block">
+                <pre><code class="language-python">from pathlib import Path
+
+from p4gscript import P4GProject, Speaker, TimeOfDay, first_name, timeOfDay</code></pre>
+              </div>
+              <p><span class="inline-code">Path</span> нужен, чтобы указать “файл рядом с этим Python-скриптом”, а не жёсткий путь вроде <span class="inline-code">E:\\...</span>. <span class="inline-code">P4GProject</span> создаёт build-проект. <span class="inline-code">Speaker.NANAKO</span> задаёт имя говорящего в message block. <span class="inline-code">TimeOfDay</span> и <span class="inline-code">timeOfDay()</span> дают читаемую проверку “сейчас вечер”, вместо голого числа <span class="inline-code">5</span>. <span class="inline-code">first_name()</span> вставляет MessageScript-тег имени героя, которое игрок ввёл в начале игры.</p>
+            </article>
+          </div>
+
+          <h3>Блок 1. Подключаем оригинальный f007.bf</h3>
+          <div class="code-block section-stack">
+            <pre><code class="language-python">ORIGINAL_F007_BF = Path(__file__).with_name("f007.bf")
+
+
+def build_project() -&gt; P4GProject:
+    project = P4GProject.patch_field_script(
+        "nanako_evening_follow_along",
+        "f007",
+        ORIGINAL_F007_BF,
+        import_path="original_f007.bf",
+        safety="beginner",
+    )</code></pre>
+          </div>
+          <p><span class="inline-code">patch_field_script(...)</span> говорит библиотеке: мы не создаём новый неизвестный игре script, а патчим существующий <span class="inline-code">f007.bf</span>. Это важный выбор. Новый файл игра сама не найдёт, а оригинальный <span class="inline-code">f007.bf</span> уже загружается дома, поэтому он подходит для первого понятного patch-мода.</p>
+          <ol class="step-list">
+            <li><strong><span class="inline-code">"nanako_evening_follow_along"</span></strong> имя build-проекта и папки результата.</li>
+            <li><strong><span class="inline-code">"f007"</span></strong> имя field script, по которому библиотека понимает стандартный игровой путь.</li>
+            <li><strong><span class="inline-code">ORIGINAL_F007_BF</span></strong> путь к оригинальному файлу, который лежит рядом с Python-файлом.</li>
+            <li><strong><span class="inline-code">import_path</span></strong> имя, под которым оригинальный <span class="inline-code">.bf</span> будет подключён в generated <span class="inline-code">.flow</span>.</li>
+            <li><strong><span class="inline-code">safety="beginner"</span></strong> режим, в котором библиотека ведёт тебя через готовые helpers и не требует raw FlowScript.</li>
+          </ol>
+
+          <h3>Блок 2. Резервируем bit и выбираем hook</h3>
+          <div class="code-block section-stack">
+            <pre><code class="language-python">    shown = project.reserve_bit(
+        "MOD_NANAKO_EVENING_HELLO_SHOWN",
+        reason="show follow-along Nanako hello once in the evening",
+    )
+
+    hook = project.replace_hook("select_nanako_okaeri")</code></pre>
+          </div>
+          <p><span class="inline-code">reserve_bit(...)</span> создаёт понятный флаг “мод уже показал сообщение”. Думай о нём как о маленькой памяти мода: сначала значение равно 0, сообщение можно показать; после показа библиотека выставит bit в 1, и блок больше не повторится.</p><p><span class="inline-code">replace_hook(...)</span> выбирает точку входа. Мы говорим: “когда игра соберётся выполнить <span class="inline-code">select_nanako_okaeri()</span>, сначала зайди в мой <span class="inline-code">select_nanako_okaeri_hook()</span>”. Название процедуры важно: если игра не дойдёт до <span class="inline-code">select_nanako_okaeri</span>, твой код не выполнится.</p>
+
+          <h3>Блок 3. Сначала делаем самый простой видимый результат</h3>
+          <div class="code-block section-stack">
+            <pre><code class="language-python">    with hook.once(shown, condition=timeOfDay() == TimeOfDay.EVENING):
+        hook.help("Hello world!", name="MOD_NANAKO_HELLO_HELP")</code></pre>
+          </div>
+          <p>Строка <span class="inline-code">with hook.once(...):</span> открывает защищённый блок. Всё, что стоит внутри с отступом, выполнится только если bit ещё выключен и сейчас вечер. После успешного выполнения библиотека сама добавит <span class="inline-code">BIT_ON(...)</span>.</p><p><span class="inline-code">hook.help(...)</span> создаёт help popup через <span class="inline-code">HELP_MSG</span>. Это хороший первый видимый результат: он не требует портрета, имени персонажа или сложного message window. Если в игре появился <span class="inline-code">Hello world!</span>, значит hook действительно достигнут.</p>
+
+          <h3>Блок 4. Добавляем реплику Нанако после help_msg</h3>
+          <div class="code-block section-stack">
+            <pre><code class="language-python"># ...внутри with hook.once(...):
+hook.say(
+    Speaker.NANAKO,
+    f"Hello, {first_name()}. Great script!",
+    name="MOD_NANAKO_HELLO_DIALOG",
+)</code></pre>
+          </div>
+          <p><span class="inline-code">first_name()</span> возвращает тег <span class="inline-code">[fName]</span>. В оригинальном <span class="inline-code">comu00.msg</span> Йоске обращается к игроку точно так же: в тексте лежит <span class="inline-code">Yo, [fName].</span>, а игра при показе заменяет тег на имя, введённое игроком.</p>
+          <p><span class="inline-code">hook.say(...)</span> отличается от <span class="inline-code">hook.help(...)</span>: он создаёт обычное окно диалога, message block с говорящим и вызовы <span class="inline-code">OPEN_MSG_WIN()</span>, <span class="inline-code">MSG(...)</span>, <span class="inline-code">CLOSE_MSG_WIN()</span>. <span class="inline-code">Speaker.NANAKO</span> здесь отвечает только за имя говорящего, без портрета.</p>
+          <p>Для переноса строки внутри одного окна можно написать обычный Python-перенос <span class="inline-code">\n</span>: библиотека превратит его в MessageScript-тег <span class="inline-code">[n]</span>. Если хочется явно показать намерение в коде, используй <span class="inline-code">line_break()</span> или <span class="inline-code">new_line()</span>.</p>
+          <p>Длинные реплики переносятся автоматически: по умолчанию строка ограничена <span class="inline-code">40</span> видимыми символами, а одно окно содержит максимум <span class="inline-code">3</span> строки. При расчёте <span class="inline-code">first_name()</span>, <span class="inline-code">last_name()</span> и <span class="inline-code">msg_var(...)</span> считаются как <span class="inline-code">8</span> символов, потому что реальное значение появится только в игре. Если нужен более осторожный лимит, передай <span class="inline-code">wrap_width=35</span>; если перенос надо отключить, передай <span class="inline-code">auto_wrap=False</span>.</p>
+          <div class="callout warn section-stack">
+            <h3>Почему имя не нужно экранировать вручную</h3>
+            <p>Библиотека экранирует случайные квадратные скобки, чтобы обычный текст не сломал MessageScript. Но для безопасных тегов <span class="inline-code">[fName]</span>, <span class="inline-code">[lName]</span> и <span class="inline-code">[var 0]</span> сделано исключение: они остаются настоящими игровыми тегами без ручного <span class="inline-code">escape=False</span>.</p>
+          </div>
+          <p>Если тебе нужна русская фраза под фанатский перевод, используй тот же принцип: <span class="inline-code">encrypt_p4g_text(f"Привет, {first_name()}. Отличный скрипт!")</span>. Твой <span class="inline-code">translate.py</span> сохраняет tags внутри квадратных скобок, а библиотека оставит <span class="inline-code">[fName]</span> тегом при рендере. Если в игре вместо имени видно что-то вроде <span class="inline-code">ЪеНальдЬ</span>, значит тег попал в сообщение как обычный текст, а не как MessageScript-тег.</p>
+
+          <h3>Полный код</h3>
+          <p>Ниже тот же код целиком. Комментарии в нём оставлены не для красоты: они показывают, какая часть отвечает за исходный файл, какая за точку входа, какая за одноразовый запуск, а какая возвращает оригинальное поведение игры.</p>
+          <div class="code-block section-stack">
+            <pre><code class="language-python">from __future__ import annotations
+
+from pathlib import Path
+
+from p4gscript import P4GProject, Speaker, TimeOfDay, first_name, timeOfDay
+
+
+# Оригинальный field script должен лежать рядом с этим Python-файлом:
+# examples/f007.bf
+ORIGINAL_F007_BF = Path(__file__).with_name("f007.bf")
+
+
+def build_project() -&gt; P4GProject:
+    # Берём оригинальный f007.bf и готовим patch-проект для field script f007.
+    project = P4GProject.patch_field_script(
+        "nanako_evening_follow_along",
+        "f007",
+        ORIGINAL_F007_BF,
+        import_path="original_f007.bf",
+        safety="beginner",
+    )
+
+    # Bit нужен, чтобы help popup и реплика не повторялись бесконечно.
+    shown = project.reserve_bit(
+        "MOD_NANAKO_EVENING_HELLO_SHOWN",
+        reason="show follow-along Nanako hello once in the evening",
+    )
+
+    # Это конкретная процедура домашнего f007, а не любой разговор с Нанако.
+    hook = project.replace_hook("select_nanako_okaeri")
+
+    # Сначала показываем help_msg, потом обычную реплику Нанако.
+    with hook.once(shown, condition=timeOfDay() == TimeOfDay.EVENING):
+        hook.help("Hello world!", name="MOD_NANAKO_HELLO_HELP")
+        hook.say(
+            Speaker.NANAKO,
+            f"Hello, {first_name()}. Great script!",
+            name="MOD_NANAKO_HELLO_DIALOG",
+        )
+
+    # Возвращаем оригинальный диалог Нанако после нашего кода.
+    hook.call_original()
+    return project
+
+
+if __name__ == "__main__":
+    result = build_project().Build(Debug=True)
+    print(f"Wrote flow: {result.flow_path}")
+    if result.msg_path:
+        print(f"Wrote msg:  {result.msg_path}")
+    if result.bf_path:
+        print(f"Wrote bf:   {result.bf_path}")</code></pre>
+          </div>
+
+          <div class="lesson-grid section-stack">
+            <article class="panel">
+              <h3>Что сгенерируется в .flow</h3>
+              <p>Этот блок показывает, во что превращаются Python helpers. Здесь видно, что <span class="inline-code">hook.once(...)</span> стал <span class="inline-code">if (BIT_CHK(...) == 0 && GET_TIME_OF_DAY() == 5)</span>, <span class="inline-code">hook.help(...)</span> стал <span class="inline-code">HELP_MSG(...)</span>, а <span class="inline-code">hook.call_original()</span> стал <span class="inline-code">select_nanako_okaeri_unhooked()</span>.</p>
+              <div class="code-block">
+                <pre><code class="language-flow">import("original_f007.bf");
+import("nanako_evening_follow_along.msg");
+
+const int MOD_NANAKO_EVENING_HELLO_SHOWN = 9000;
+
+void select_nanako_okaeri_hook()
+{
+    if (BIT_CHK(MOD_NANAKO_EVENING_HELLO_SHOWN) == 0 && (GET_TIME_OF_DAY() == 5))
+    {
+        HELP_MSG(MOD_NANAKO_HELLO_HELP);
+        OPEN_MSG_WIN();
+        MSG(MOD_NANAKO_HELLO_DIALOG);
+        CLOSE_MSG_WIN();
+        BIT_ON(MOD_NANAKO_EVENING_HELLO_SHOWN);
+    }
+    select_nanako_okaeri_unhooked();
+    return;
+}</code></pre>
+              </div>
+            </article>
+            <article class="panel">
+              <h3>Что появится в .msg</h3>
+              <div class="code-block">
+                <pre><code class="language-msg">[msg MOD_NANAKO_HELLO_HELP]
+[s]Hello world![n][w][e]
+
+[msg MOD_NANAKO_HELLO_DIALOG [Nanako]]
+[s]Hello, [fName]. Great script![n][w][e]</code></pre>
+              </div>
+            </article>
+          </div>
+
+          <h3>Команда сборки</h3>
+          <div class="code-block section-stack">
+            <pre><code class="language-powershell"># Из корня репозитория pyFlowCompile:
+$env:PYTHONPATH="src"
+python examples\nanako_evening_follow_along.py</code></pre>
+          </div>
+          <p>После сборки ищи результат в <span class="inline-code">build/nanako_evening_follow_along/</span>. Для игры важен не только сам <span class="inline-code">.bf</span>, но и правильный путь установки.</p>
+
+          <div class="callout info section-stack">
+            <h3>Куда положить мод</h3>
+            <p>Итоговый build-файл может называться <span class="inline-code">nanako_evening_follow_along.bf</span>, но игра ждёт замену именно <span class="inline-code">f007.bf</span>. При установке скопируй собранный <span class="inline-code">.bf</span> как <span class="inline-code">f007.bf</span> в путь, который использует твой loader. Если положить файл под неправильным именем или в неправильную папку, Reloaded II может загрузить мод, но игра не увидит замену нужного script container.</p>
+            <div class="code-block">
+              <pre><code class="language-text">Обычный target внутри мода:
+data_e.cpk/field/script/f007.bf
+
+FEmulator / pack layout для дома:
+FEmulator/PAK/field/pack/fd007_001.arc/f007.bf
+FEmulator/PAK/field/pack/fd007_002.arc/f007.bf</code></pre>
+            </div>
+          </div>
+
+          <div class="callout warn section-stack">
+            <h3>Как заставить мод сработать</h3>
+            <p>Включи мод в Reloaded II, перезапусти игру или хотя бы заставь дом Доджимы заново загрузить <span class="inline-code">f007.bf</span>. Затем вечером проверь именно домашний сценарий, который ведёт к <span class="inline-code">select_nanako_okaeri</span>. Если ты просто говоришь с Нанако в другой ветке, открываешь меню или проверяешь другую локацию, hook не обязан сработать.</p>
+          </div>
+        </section>
+        <section class="doc-section" id="project-model">
+          <h2>Как библиотека описывает мод</h2>
+          <p class="lead">В p4gscript один Python-объект <span class="inline-code">P4GProject</span> описывает один собираемый script container. В первом учебном маршруте мы используем patch-mode: берём оригинальный <span class="inline-code">.bf</span>, добавляем свой hook и собираем новый <span class="inline-code">.bf</span> для модификации.</p>
+
+          <div class="path-grid section-stack">
+            <article class="path-card">
+              <span>1</span>
+              <h3>Project</h3>
+              <p>Имя сборки, режим безопасности, сообщения, процедуры, hooks и build-настройки.</p>
+            </article>
+            <article class="path-card">
+              <span>2</span>
+              <h3>Source</h3>
+              <p>Оригинальный <span class="inline-code">.bf</span>, который будет патчиться. В первом уроке это <span class="inline-code">scheduler_01.bf</span>.</p>
+            </article>
+            <article class="path-card">
+              <span>3</span>
+              <h3>Hook</h3>
+              <p>Процедура-перехват, которая встраивается в уже вызываемую игровую процедуру.</p>
+            </article>
+            <article class="path-card">
+              <span>4</span>
+              <h3>Build</h3>
+              <p>Генерация <span class="inline-code">.flow</span>, <span class="inline-code">.msg</span> и итогового <span class="inline-code">.bf</span>.</p>
+            </article>
+          </div>
+
+          <div class="code-block section-stack">
+            <pre><code class="language-python">from pathlib import Path
+from p4gscript import P4GProject
+
+project = P4GProject.patch_script(
+    "hello_scheduler",
+    Path(__file__).with_name("scheduler_01.bf"),
+    target="data_e/scheduler/scheduler_01.bf",
+    import_path="original_scheduler_01.bf",
+    safety="beginner",
+)</code></pre>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <strong><span class="inline-code">patch_script(...)</span></strong>
+              Мы говорим библиотеке: “возьми этот оригинальный <span class="inline-code">.bf</span> и подготовь проект для патча”.
+            </li>
+            <li>
+              <strong><span class="inline-code">Path(__file__).with_name("scheduler_01.bf")</span></strong>
+              Оригинальный файл лежит рядом с Python-скриптом. Пользователю не нужно прописывать глобальные пути Windows.
+            </li>
+            <li>
+              <strong><span class="inline-code">target</span></strong>
+              Игровой путь, куда итоговый файл должен попасть внутри структуры мода.
+            </li>
+            <li>
+              <strong><span class="inline-code">import_path</span></strong>
+              Имя, под которым оригинальный container будет импортирован в generated <span class="inline-code">.flow</span>.
+            </li>
+            <li>
+              <strong><span class="inline-code">safety="beginner"</span></strong>
+              Режим, в котором библиотека ведёт автора через понятные helpers и не поощряет raw FlowScript.
+            </li>
+          </ol>
+
+          <div class="callout info section-stack">
+            <h3>Где остальные способы создания проекта</h3>
+            <p><span class="inline-code">patch_field_script(...)</span>, <span class="inline-code">new_field_script(...)</span>, <span class="inline-code">BF(...)</span> и <span class="inline-code">Empty(...)</span> описаны дальше и в справочнике. В первых уроках важно не распыляться: один прямой patch-route даёт меньше ошибок и быстрее приводит к рабочему моду.</p>
+          </div>
+        </section>
+<section class="doc-section" id="python-style">
+          <h2>Короткий Python-стиль: пишем смысл, а не служебные числа</h2>
+          <p class="lead">Хороший пользовательский код на p4gscript должен читаться как сценарий мода. Автору не нужно помнить путь <span class="inline-code">data_e.cpk/field/script/...</span>, вручную писать <span class="inline-code">[bup 2 1 65535 1]</span> или каждый раз собирать <span class="inline-code">BIT_CHK</span> + <span class="inline-code">BIT_ON</span>. Для этого в библиотеке есть короткие constructors, доменные объекты и готовые сценарные helpers.</p>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Порядок мысли перед кодом</h3>
+              <ol class="step-list">
+                <li>
+                  <strong>Сначала выбери игровой вызов</strong>
+                  Какое действие игрока должно запустить мод: утро, разговор с NPC, вход в поле, конкретная процедура event chain?
+                </li>
+                <li>
+                  <strong>Потом выбери source</strong>
+                  Если меняешь существующее поведение, начинай с <span class="inline-code">patch_script(...)</span> или <span class="inline-code">patch_field_script(...)</span>. Если создаёшь новый container, используй <span class="inline-code">new_script(...)</span> или <span class="inline-code">new_field_script(...)</span> и помни, что его ещё нужно вызвать.
+                </li>
+                <li>
+                  <strong>Затем опиши текст и персонажей</strong>
+                  Для простого имени бери <span class="inline-code">Speaker</span>. Для имени вместе с портретом бери <span class="inline-code">Character</span>. Низкоуровневый <span class="inline-code">Bustup</span> оставляй для редких выражений лица и неизвестных персонажей.
+                </li>
+                <li>
+                  <strong>В конце выбери hook-стратегию</strong>
+                  Чаще всего новичку нужен <span class="inline-code">replace_hook(...)</span> + <span class="inline-code">call_original()</span>, либо готовый helper <span class="inline-code">show_message_before_original(...)</span>.
+                </li>
+              </ol>
+            </article>
+            <article class="panel">
+              <h3>Минимальный стиль для реплики персонажа</h3>
+              <div class="code-block">
+                <pre><code class="language-python">from p4gscript import Character
+from translate import encrypt_p4g_text
+
+# project уже создан через P4GProject.patch_field_script(...)
+yosuke = Character.YOSUKE.with_name(encrypt_p4g_text("Ёсукэ Ханамура"))
+
+hook = project.replace_hook("SCR_ONLY_NPC_YOUSUKE")
+hook.say(yosuke, encrypt_p4g_text("Мод работает!"), name="MOD_YOSUKE_TEST")
+hook.call_original()</code></pre>
+              </div>
+              <p>В этом варианте <span class="inline-code">Character.YOSUKE</span> сам даёт стандартный портрет, <span class="inline-code">with_name(...)</span> меняет видимое имя под русификатор, а <span class="inline-code">hook.say(...)</span> сам создаёт message block и обычное окно диалога.</p>
+            </article>
+          </div>
+
+          <div class="table-wrap section-stack">
+            <table>
+              <thead>
+                <tr>
+                  <th>Что использовать</th>
+                  <th>Когда подходит</th>
+                  <th>Пример</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="inline-code">Speaker.NANAKO</span></td>
+                  <td>Нужно только имя говорящего, без портрета.</td>
+                  <td><span class="inline-code">hook.say(Speaker.NANAKO, "...")</span></td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">Character.YOSUKE</span></td>
+                  <td>Нужны имя и стандартный портрет персонажа.</td>
+                  <td><span class="inline-code">hook.say(Character.YOSUKE, "...")</span></td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">Character.YOSUKE.with_name(...)</span></td>
+                  <td>Фанатский перевод требует другое видимое имя, но портрет остаётся тем же.</td>
+                  <td><span class="inline-code">Character.YOSUKE.with_name(encrypt_p4g_text("Ёсукэ Ханамура"))</span></td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">Character.YOSUKE.portrait(expression_id=...)</span></td>
+                  <td>Нужно конкретное выражение лица, но без ручного character id.</td>
+                  <td><span class="inline-code">dialog.line("...", bustup=Character.YOSUKE.portrait(3))</span></td>
+                </tr>
+                <tr>
+                  <td><span class="inline-code">Bustup(...)</span></td>
+                  <td>Продвинутый случай: персонажа ещё нет в <span class="inline-code">Character</span> или нужны сырые id.</td>
+                  <td><span class="inline-code">Bustup(2, 1, 65535, 1)</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout info section-stack">
+            <h3>Если Python не видит p4gscript</h3>
+            <p>Ошибка <span class="inline-code">ModuleNotFoundError: No module named 'p4gscript'</span> означает не проблему мода, а проблему запуска Python. Внутри репозитория запускай скрипт с <span class="inline-code">$env:PYTHONPATH="src"</span> или добавляй <span class="inline-code">src</span> в <span class="inline-code">sys.path</span> только в example-файлах. Обычному пользователю не нужно редактировать системный PATH Windows.</p>
+          </div>
+        </section>
+        <section class="doc-section" id="safety-modes">
+          <h2>Режимы safety: beginner и standard</h2>
+          <p class="lead">Эта библиотека специально должна уметь вести новичка мягко. Поэтому режимы safety задают не просто ограничения, а форму обучения.</p>
+
+          <div class="card-grid section-stack">
+            <article class="doc-card">
+              <div class="info-strip"><span class="badge beginner">beginner</span></div>
+              <h3>Режим для входа в моддинг</h3>
+              <p>Пользователь пишет через подготовленные helpers библиотеки: понятные проверки, сообщения, hooks и частые вызовы. Это снижает риск синтаксических ошибок и делает код читабельнее, чем raw FlowScript.</p>
+            </article>
+            <article class="doc-card">
+              <div class="info-strip"><span class="badge standard">standard</span></div>
+              <h3>Режим расширенной свободы</h3>
+              <p>Открывает прямые вызовы редких native-функций, raw conditions и raw code. Код становится мощнее, но требует понимания того, как работает оригинальный script layer.</p>
+            </article>
+            <article class="doc-card">
+              <div class="info-strip"><span class="badge core">Важно</span></div>
+              <h3>Standard включает beginner</h3>
+              <p>В standard можно использовать всё, что доступно в beginner. Разница только в том, что появляется доступ к более низкому уровню.</p>
+            </article>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Задача</th>
+                  <th>beginner</th>
+                  <th>standard</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Проверить bit</td>
+                  <td><span class="inline-code">bitChk(done) == 0</span></td>
+                  <td>То же самое или raw строка</td>
+                </tr>
+                <tr>
+                  <td>Показать сообщение</td>
+                  <td><span class="inline-code">hook.say(Speaker.NANAKO, "...")</span></td>
+                  <td>То же самое</td>
+                </tr>
+                <tr>
+                  <td>Вызвать редкую native-функцию</td>
+                  <td>Обычно недоступно напрямую</td>
+                  <td><span class="inline-code">hook.call("SAVE_ASK", 3)</span></td>
+                </tr>
+                <tr>
+                  <td>Написать raw FlowScript</td>
+                  <td>Не рекомендуется и блокируется</td>
+                  <td><span class="inline-code">hook.raw("...")</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+                <section class="doc-section" id="lesson-1">
+          <h2>Урок 1. Первый рабочий мод: Нанако говорит утром один раз</h2>
+          <p class="lead">Сначала ставим понятную задачу: после утреннего обновления дня показать короткое сообщение и больше не повторять его на каждом утре. Для этого мы патчим scheduler, потому что игра сама вызывает его каждый день.</p>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Почему именно scheduler</h3>
+              <ol class="step-list">
+                <li>
+                  <strong>Игра уже вызывает <span class="inline-code">everymorning()</span></strong>
+                  Нам не нужно придумывать новый запуск. Мы встраиваемся в процедуру, которая уже участвует в ежедневной логике.
+                </li>
+                <li>
+                  <strong>Результат легко проверить</strong>
+                  Если сообщение появилось утром, значит исходный <span class="inline-code">.bf</span>, build, hook и установка мода работают.
+                </li>
+                <li>
+                  <strong>Есть простая причина для bit</strong>
+                  Без bit сообщение будет появляться каждый раз, когда игра проходит через эту процедуру. Bit делает событие одноразовым.
+                </li>
+              </ol>
+            </article>
+            <article class="panel">
+              <h3>Что должно лежать рядом</h3>
+              <ul class="plain-list">
+                <li><strong><span class="inline-code">hello_scheduler.py</span></strong> Python-файл, который ты пишешь.</li>
+                <li><strong><span class="inline-code">scheduler_01.bf</span></strong> Оригинальный файл игры, который ты заранее достал из данных P4G.</li>
+                <li><strong>Доступный <span class="inline-code">p4gscript</span></strong> Если запускаешь из репозитория, используй <span class="inline-code">$env:PYTHONPATH="src"</span>.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="callout info section-stack">
+            <h3>Что такое hook простыми словами</h3>
+            <p>Hook — это перехват. Мы не переписываем весь scheduler. Мы говорим компилятору: когда игра дойдёт до <span class="inline-code">everymorning()</span>, выполни нашу hook-процедуру. Внутри неё мы явно вызываем оригинал через <span class="inline-code">call_original()</span>, а потом добавляем своё сообщение.</p>
+          </div>
+
+          <div class="callout info section-stack">
+            <h3>Что такое bit в этом уроке</h3>
+            <p>Bit — это маленький переключатель 0/1. Пока bit выключен, сообщение можно показать. После показа библиотека включает bit, и тот же блок больше не повторяется. Поэтому <span class="inline-code">project.reserve_bit(...)</span> здесь не украшение, а защита от бесконечного повтора.</p>
+          </div>
+
+          <div class="code-block section-stack">
+            <pre><code class="language-python">from __future__ import annotations
+
+from pathlib import Path
+
+from p4gscript import P4GProject, Speaker
+
+
+def build_project() -&gt; P4GProject:
+    project = P4GProject.patch_script(
+        "hello_scheduler",
+        Path(__file__).with_name("scheduler_01.bf"),
+        target="data_e/scheduler/scheduler_01.bf",
+        import_path="original_scheduler_01.bf",
+        safety="beginner",
+    )
+
+    shown = project.reserve_bit(
+        "MOD_HELLO_WORLD_SHOWN",
+        reason="show tutorial greeting once after morning update",
+    )
+
+    hook = project.replace_hook("everymorning")
+    hook.call_original()
+
+    with hook.once(shown):
+        hook.say(Speaker.NANAKO, "Привет. Этот мод реально вызвался утром.")
+
+    return project
+
+
+if __name__ == "__main__":
+    result = build_project().Build(Debug=True)
+    print(result.flow_path)
+    print(result.msg_path)
+    print(result.bf_path)</code></pre>
+          </div>
+
+          <div class="lesson-grid section-stack">
+            <article class="panel">
+              <h3>Что сгенерируется в .flow</h3>
+              <p>Это упрощённый вид результата, который помогает понять связь между Python и FlowScript. Важно увидеть две вещи: <span class="inline-code">call_original()</span> стал вызовом <span class="inline-code">everymorning_unhooked()</span>, а <span class="inline-code">once(...)</span> превратился в проверку bit и автоматический <span class="inline-code">BIT_ON(...)</span>.</p>
+              <div class="code-block">
+                <pre><code class="language-flow">import("original_scheduler_01.bf");
+import("hello_scheduler.msg");
+
+const int MOD_HELLO_WORLD_SHOWN = 9000;
+
+void everymorning_hook()
+{
+    everymorning_unhooked();
+    if (BIT_CHK(MOD_HELLO_WORLD_SHOWN) == 0)
+    {
+        OPEN_MSG_WIN();
+        MSG(everymorning_hook_MSG_1);
+        CLOSE_MSG_WIN();
+        BIT_ON(MOD_HELLO_WORLD_SHOWN);
+    }
+    return;
+}</code></pre>
+              </div>
+            </article>
+            <article class="panel">
+              <h3>Что появится в .msg</h3>
+              <p>Текст физически уходит в MessageScript. FlowScript не хранит реплику напрямую, а вызывает message block по имени.</p>
+              <div class="code-block">
+                <pre><code class="language-msg">[msg everymorning_hook_MSG_1 [Nanako]]
+[s]Привет. Этот мод реально вызвался утром.[n][w][e]</code></pre>
+              </div>
+            </article>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <strong>Создаём patch-проект</strong>
+              <span class="inline-code">patch_script(...)</span> получает оригинальный <span class="inline-code">scheduler_01.bf</span> и готовит его к изменению.
+            </li>
+            <li>
+              <strong>Резервируем bit</strong>
+              <span class="inline-code">MOD_HELLO_WORLD_SHOWN</span> будет хранить состояние “реплика уже была показана”.
+            </li>
+            <li>
+              <strong>Создаём hook</strong>
+              <span class="inline-code">replace_hook("everymorning")</span> создаёт процедуру, которую hook-компилятор свяжет с оригинальной утренней процедурой.
+            </li>
+            <li>
+              <strong>Возвращаем оригинальное поведение</strong>
+              <span class="inline-code">hook.call_original()</span> нужен, чтобы vanilla scheduler не исчез из игры.
+            </li>
+            <li>
+              <strong>Показываем сообщение один раз</strong>
+              <span class="inline-code">with hook.once(shown):</span> сам проверяет bit и сам включает его после успешного выполнения блока.
+            </li>
+          </ol>
+
+          <div class="callout info section-stack">
+            <h3>Ожидаемый результат сборки</h3>
+            <p>Если всё сделано правильно, в папке <span class="inline-code">build/hello_scheduler</span> появятся <span class="inline-code">hello_scheduler.flow</span>, <span class="inline-code">hello_scheduler.msg</span>, <span class="inline-code">hello_scheduler.bf</span> и manifest-файлы. Если <span class="inline-code">.bf</span> не появился, сначала смотри вывод консоли и запускай <span class="inline-code">Build(Debug=True)</span>.</p>
+          </div>
+
+          <div class="callout warn section-stack">
+            <h3>Что ещё не доказано этим уроком</h3>
+            <p>Успешный build доказывает, что проект собрался. Проверка в игре доказывает больше: что файл лежит по правильному пути, mod loader его подхватил, а игра действительно дошла до нужной процедуры.</p>
+          </div>
+        </section>
+<section class="doc-section" id="lesson-2">
+  <h2>Урок 2. Hook в field-скрипт: точная точка входа</h2>
+  <p class="lead">Теперь можно переходить к локальной логике карты. Здесь важно не гадать по названию функции. <span class="inline-code">call_lmap()</span> в <span class="inline-code">f007</span> не означает кнопку мини-карты: это локальная field-процедура, связанная с домашней логикой выхода и карты. Такой hook проверяют только тем действием, которое действительно вызывает эту процедуру.</p>
+
+  <div class="code-block">
+    <pre><code class="language-python">from __future__ import annotations
+
+from pathlib import Path
+
+from p4gscript import P4GProject
+
+
+def build_project() -&gt; P4GProject:
+    project = P4GProject.patch_field_script(
+        "patch_f007_save_action",
+        "f007",
+        Path(__file__).with_name("f007.bf"),
+        import_path="original_f007.bf",
+        safety="standard",
+    )
+
+    hook = project.replace_hook("call_lmap")
+    hook.call("STOP_BGM", 30)
+    hook.call("SAVE_ASK", 3)
+    hook.call("NS_DISABLE_PLAYER_MOVEMENT")
+    return project
+
+
+if __name__ == "__main__":
+    result = build_project().Build(Debug=True)
+    print(result.bf_path)</code></pre>
+  </div>
+
+  <div class="callout warn section-stack">
+    <h3>Как правильно проверять field hook</h3>
+    <p>Не проверяй <span class="inline-code">call_lmap()</span> через любую кнопку карты. Сначала найди в декомпилированном <span class="inline-code">f007.flow</span>, кто вызывает эту процедуру, и воспроизведи именно этот игровой сценарий. Если нужен самый надёжный первый smoke-test, используй scheduler hook из урока 1 или проверенный NPC hook из практики с <span class="inline-code">comu00</span>.</p>
+  </div>
+
+  <div class="lesson-grid section-stack">
+    <article class="lesson-card">
+      <h3>Как это читается по-человечески</h3>
+      <ol class="step-list">
+        <li>
+          <strong>Игра вызывает <span class="inline-code">call_lmap()</span> только в своём маршруте</strong>
+          Это внутренняя процедура field-скрипта <span class="inline-code">f007</span>, связанная с домашней логикой выхода и карты. Простое открытие мини-карты может идти по другому UI-маршруту и не обязано попасть сюда.
+        </li>
+        <li>
+          <strong><span class="inline-code">patch_field_script(...)</span> уже знает target layout</strong>
+          Тебе не нужно каждый раз вручную прописывать стандартный путь <span class="inline-code">data_e.cpk/field/script/f007.bf</span>.
+        </li>
+        <li>
+          <strong>Оригинал заменяется твоим кодом</strong>
+          Поэтому сначала останавливается музыка, потом открывается окно сохранения, потом отключается движение игрока.
+        </li>
+      </ol>
+    </article>
+    <article class="panel">
+      <h3>Почему здесь нужен standard</h3>
+      <p>В примере используются прямые native-вызовы через <span class="inline-code">hook.call("...")</span>. Это не beginner-helper с готовым смыслом, а явный вызов функции игры по имени. В режиме <span class="inline-code">beginner</span> неизвестные вызовы вроде <span class="inline-code">STOP_BGM</span> блокируются, чтобы новичок не сломал сценарий случайной native-командой. Поэтому для таких прямых вызовов нужен режим <span class="inline-code">standard</span>.</p>
+    </article>
+  </div>
+
+  <div class="lesson-grid section-stack">
+    <article class="panel">
+      <h3>Что сгенерируется в .flow</h3>
+      <p>Так выглядит replace-hook без вызова оригинала. Игра доходит до <span class="inline-code">call_lmap()</span>, а hook-компилятор подставляет вместо неё <span class="inline-code">call_lmap_hook()</span>.</p>
+      <div class="code-block">
+        <pre><code class="language-flow">import("original_f007.bf");
+
+void call_lmap_hook()
+{
+    STOP_BGM(30);
+    SAVE_ASK(3);
+    NS_DISABLE_PLAYER_MOVEMENT();
+    return;
+}</code></pre>
+      </div>
+    </article>
+    <article class="panel">
+      <h3>Шпаргалка по hook-стратегиям</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Метод</th>
+              <th>Что создаёт</th>
+              <th>Когда использовать</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="inline-code">replace_hook("target")</span></td>
+              <td><span class="inline-code">target_hook()</span></td>
+              <td>Полный перехват. Если нужен vanilla-код, вручную вызывай <span class="inline-code">call_original()</span>.</td>
+            </tr>
+            <tr>
+              <td><span class="inline-code">soft_hook("target")</span></td>
+              <td><span class="inline-code">target_softhook()</span></td>
+              <td>Мягкий before-hook. Используй, когда хочешь добавить действие до оригинальной процедуры.</td>
+            </tr>
+            <tr>
+              <td><span class="inline-code">after_hook("target")</span></td>
+              <td><span class="inline-code">target_hookafter()</span></td>
+              <td>After-hook. Используй, когда твоё действие должно идти после оригинальной процедуры.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <div class="callout danger section-stack">
+    <h3>Что будет, если вслепую заменить процедуру</h3>
+    <p>Replace-hook не вызывает оригинал автоматически. Если логика карты должна продолжить своё штатное поведение после твоего вмешательства, обязательно добавляй <span class="inline-code">hook.call_original()</span> в нужное место. Иначе ты действительно перехватываешь процедуру целиком.</p>
+  </div>
+</section>
+        <section class="doc-section" id="lesson-3">
+  <h2>Урок 3. Сообщения, реплики и выборы внутри уже знакомого hook</h2>
+  <p class="lead">Теперь развиваем первый урок, а не прыгаем в новый standalone script. Мы снова берём <span class="inline-code">scheduler_01.bf</span>, снова встраиваемся в <span class="inline-code">everymorning()</span>, но вместо одной реплики показываем вопрос с вариантами ответа.</p>
+
+  <div class="callout info section-stack">
+    <h3>Почему остаёмся в patch-mode</h3>
+    <p>Новичку важно закрепить один рабочий маршрут: игра вызывает оригинальный scheduler, hook получает управление, Python-код уже превратился в FlowScript, сообщение появляется в игре. <span class="inline-code">new_field_script(...)</span> и отдельная <span class="inline-code">main()</span> будут позже, когда ты уже понимаешь, кто вызовет новый script container.</p>
+  </div>
+
+  <div class="code-block section-stack">
+    <pre><code class="language-python">from __future__ import annotations
+
+from pathlib import Path
+
+from p4gscript import P4GProject, Speaker
+
+
+def build_project() -&gt; P4GProject:
+    project = P4GProject.patch_script(
+        "nanako_breakfast_choice",
+        Path(__file__).with_name("scheduler_01.bf"),
+        target="data_e/scheduler/scheduler_01.bf",
+        import_path="original_scheduler_01.bf",
+        safety="beginner",
+    )
+
+    asked = project.reserve_bit(
+        "MOD_NANAKO_BREAKFAST_ASKED",
+        reason="ask breakfast question once",
+    )
+
+    hook = project.replace_hook("everymorning")
+    hook.call_original()
+
+    with hook.once(asked):
+        hook.say(Speaker.NANAKO, "Привет! Позавтракаешь?")
+        choice = hook.ask(
+            "breakfast_choice",
+            "Да",
+            "Нет, позже",
+            name="MOD_BREAKFAST_CHOICE",
+        )
+
+        with hook.if_(choice == 0):
+            hook.say(Speaker.NANAKO, "Хорошо. Тогда я всё подготовлю.")
+
+    return project</code></pre>
+  </div>
+
+  <div class="lesson-grid section-stack">
+    <article class="mini-card">
+      <h3><span class="inline-code">hook.say(...)</span></h3>
+      <p>Создаёт message block в <span class="inline-code">.msg</span> и в <span class="inline-code">.flow</span> добавляет <span class="inline-code">OPEN_MSG_WIN()</span>, <span class="inline-code">MSG(...)</span>, <span class="inline-code">CLOSE_MSG_WIN()</span>.</p>
+    </article>
+    <article class="mini-card">
+      <h3><span class="inline-code">hook.ask(...)</span></h3>
+      <p>Создаёт selection block, вызывает <span class="inline-code">SEL(...)</span> и возвращает переменную выбора. Индексы начинаются с нуля: первый вариант — <span class="inline-code">0</span>, второй — <span class="inline-code">1</span>.</p>
+    </article>
+  </div>
+
+  <div class="lesson-grid section-stack">
+    <article class="panel">
+      <h3>Что сгенерируется в .flow</h3>
+      <div class="code-block">
+        <pre><code class="language-flow">import("original_scheduler_01.bf");
+import("nanako_breakfast_choice.msg");
+
+const int MOD_NANAKO_BREAKFAST_ASKED = 9000;
+
+void everymorning_hook()
+{
+    everymorning_unhooked();
+    if (BIT_CHK(MOD_NANAKO_BREAKFAST_ASKED) == 0)
+    {
+        OPEN_MSG_WIN();
+        MSG(everymorning_hook_MSG_1);
+        CLOSE_MSG_WIN();
+        int breakfast_choice = SEL(MOD_BREAKFAST_CHOICE);
+        if (breakfast_choice == 0)
+        {
+            OPEN_MSG_WIN();
+            MSG(everymorning_hook_MSG_2);
+            CLOSE_MSG_WIN();
+        }
+        BIT_ON(MOD_NANAKO_BREAKFAST_ASKED);
+    }
+    return;
+}</code></pre>
+      </div>
+    </article>
+    <article class="panel">
+      <h3>Что сгенерируется в .msg</h3>
+      <div class="code-block">
+        <pre><code class="language-msg">[msg everymorning_hook_MSG_1 [Nanako]]
+[s]Привет! Позавтракаешь?[n][w][e]
+
+[msg everymorning_hook_MSG_2 [Nanako]]
+[s]Хорошо. Тогда я всё подготовлю.[n][w][e]
+
+[sel MOD_BREAKFAST_CHOICE top]
+[s]Да[e]
+[s]Нет, позже[e]</code></pre>
+      </div>
+    </article>
+  </div>
+
+  <div class="callout info section-stack">
+    <h3><span class="inline-code">project.selection(...)</span> всё ещё есть</h3>
+    <p><span class="inline-code">hook.ask(...)</span> удобен для короткого меню прямо в процедуре. Если выбор должен переиспользоваться в нескольких местах или тебе нужен более ручной контроль, используй полный путь: <span class="inline-code">project.selection(...)</span>, <span class="inline-code">selection.option(...)</span>, затем <span class="inline-code">proc.sel(...)</span>.</p>
+  </div>
+</section>
+
+
+        <section class="doc-section" id="lesson-4">
+  <h2>Урок 4. Bits, условия и игровые проверки</h2>
+  <p class="lead">Bits и условия нужны почти в любом моде: не повторять событие, привязать реплику к дате, ограничить сценарий частью дня или сохранить промежуточное состояние. Новый API сокращает именно эти повседневные проверки.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Что ты хочешь спросить у игры</th>
+          <th>Короткий helper</th>
+          <th>Что это рендерит</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Был ли мод уже выполнен</td>
+          <td><span class="inline-code">with hook.when_bit_clear(done):</span></td>
+          <td><span class="inline-code">if (BIT_CHK(MOD_DONE) == 0)</span></td>
+        </tr>
+        <tr>
+          <td>Попадает ли день в диапазон</td>
+          <td><span class="inline-code">with hook.during(4, 1, 5, 6):</span></td>
+          <td><span class="inline-code">if (CHECK_TIME_SPAN(4, 1, 5, 6) == 1)</span></td>
+        </tr>
+        <tr>
+          <td>Какая сейчас часть дня</td>
+          <td><span class="inline-code">with hook.when_time(TimeOfDay.DAY):</span></td>
+          <td><span class="inline-code">if (GET_TIME_OF_DAY() == 4)</span></td>
+        </tr>
+        <tr>
+          <td>Сделать событие одноразовым</td>
+          <td><span class="inline-code">with hook.once(done, condition=...):</span></td>
+          <td><span class="inline-code">BIT_CHK(...) == 0</span> + автоматический <span class="inline-code">BIT_ON(...)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <pre><code class="language-python">from p4gscript import Speaker, TimeOfDay, dateChk, timeOfDay
+
+with hook.when_bit_clear(done):
+    hook.say(Speaker.NANAKO, "Это происходит только один раз.")
+
+with hook.if_(dateChk(4, 11) == 1):
+    hook.say(Speaker.NANAKO, "Сегодня особая дата.")
+
+with hook.during(4, 1, 5, 6):
+    hook.say(Speaker.NANAKO, "Сейчас активен заданный диапазон дат.")
+
+with hook.when_time(TimeOfDay.DAY):
+    hook.say(Speaker.NANAKO, "Эта реплика только для дневного времени.")
+
+with hook.once(done, condition=timeOfDay() == TimeOfDay.EVENING):
+    hook.say(Speaker.NANAKO, "Вечерняя одноразовая сцена.")</code></pre>
+  </div>
+
+  <div class="callout info section-stack">
+    <h3>Почему старые выражения всё ещё полезны</h3>
+    <p>Короткие helpers ускоряют типовой код, но прямые выражения тоже остаются доступны. Ты всё ещё можешь писать <span class="inline-code">bitChk(done) == 0</span> или <span class="inline-code">checkTimeSpan(4, 1, 5, 6) == 1</span>, если тебе так удобнее или если пример требует показать, какой native-вызов генерируется.</p>
+  </div>
+</section>
+
+        <section class="doc-section" id="lesson-5">
+          <h2>Урок 5. Build, вывод файлов и установка мода</h2>
+          <p class="lead">Когда логика готова, остаётся собрать проект и положить результат в структуру мода. Здесь как раз библиотека и должна экономить время автора.</p>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Как выглядит сборка</h3>
+              <div class="code-block">
+                <pre><code class="language-python">if __name__ == "__main__":
+    result = build_project().Build(Debug=True)
+    print(result.flow_path)
+    print(result.msg_path)
+    print(result.bf_path)</code></pre>
+              </div>
+            </article>
+            <article class="panel">
+              <h3>Что выдаёт build</h3>
+              <ul class="plain-list">
+                <li><strong><span class="inline-code">.flow</span></strong> Сгенерированная логика.</li>
+                <li><strong><span class="inline-code">.msg</span></strong> Файл сообщений, если мод создавал dialog content.</li>
+                <li><strong><span class="inline-code">.bf</span></strong> Итоговый контейнер для игры.</li>
+              </ul>
+            </article>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <strong>Положи оригинальный <span class="inline-code">.bf</span> рядом со скриптом</strong>
+              Это самый понятный сценарий для пользователя. Не нужно настраивать глобальные пути Windows.
+            </li>
+            <li>
+              <strong>Запусти Python-скрипт</strong>
+              Библиотека сама использует встроенный AtlusScriptTools из проекта.
+            </li>
+            <li>
+              <strong>Возьми итоговый <span class="inline-code">.bf</span></strong>
+              Он должен попасть в мод по тому же игровому пути, который ты указал в <span class="inline-code">target</span>.
+            </li>
+            <li>
+              <strong>Установи файл в структуру Reloaded II мода</strong>
+              Если ты патчил <span class="inline-code">data_e.cpk/field/script/f007.bf</span>, именно этот путь должен быть повторён внутри мода.
+            </li>
+          </ol>
+
+          <div class="callout info section-stack">
+            <h3>Практика: Йоске в TV-room через <span class="inline-code">comu00.bf</span></h3>
+            <p>Реальный рабочий пример для проверки hook-мода: патч на <span class="inline-code">data_e.cpk/field/script/comu00.bf</span>, который добавляет реплику Йоске перед продолжением оригинального диалога. В декомпилированном <span class="inline-code">comu00.flow</span> именно процедура <span class="inline-code">SCR_ONLY_NPC_YOUSUKE()</span> содержит ветки <span class="inline-code">YOUSUKE_DUNGEON_*</span>, связанные с походом в ТВ-мир.</p>
+          </div>
+
+          <div class="code-block">
+            <pre><code class="language-python">from pathlib import Path
+
+from p4gscript import Character, P4GProject
+from translate import encrypt_p4g_text
+
+HOOK_NAMES = (
+    "SCR_ONLY_NPC_YOUSUKE",
+    "SCR_COMMU_YOUSUKE",
+    "SCR_NIGHT_NPC_YOUSUKE",
+)
+
+project = P4GProject.patch_field_script(
+    "patch_comu00_yosuke_tv_room",
+    "comu00",
+    Path(__file__).with_name("comu00.bf"),
+    import_path="original_comu00.bf",
+    safety="beginner",
+)
+
+yosuke = Character.YOSUKE.with_name(encrypt_p4g_text("Ёсукэ Ханамура"))
+dialog = project.message("MOD_COMU00_YOSUKE_TV_ROOM", speaker=yosuke)
+dialog.line(encrypt_p4g_text("Мод работает!"))
+
+for index, hook_name in enumerate(HOOK_NAMES, start=1):
+    hook = project.replace_hook(hook_name)
+    hook.help(
+        encrypt_p4g_text(f"Сработал хук: {hook_name}"),
+        name=f"MOD_HELP_COMU00_YOSUKE_{index}",
+    )
+    hook.say(dialog)
+    hook.call_original()</code></pre>
+          </div>
+
+          <ul class="plain-list">
+            <li><strong>Почему именно <span class="inline-code">comu00</span></strong> Потому что в оригинальном скрипте там лежит логика диалога Йоске перед входом в ТВ и перед выбором дальнейшего действия.</li>
+            <li><strong>Почему <span class="inline-code">replace_hook(...)</span></strong> Потому что hook сам показывает диагностическое сообщение, а затем явно вызывает оригинальную процедуру через <span class="inline-code">call_original()</span>. Так оригинальный диалог продолжается ровно один раз.</li>
+            <li><strong>Почему нужен <span class="inline-code">translate.py</span></strong> Русский текст в фанатском переводе хранится через английские символы. Поэтому видимый текст вроде <span class="inline-code">Мод работает!</span> перед записью в <span class="inline-code">.msg</span> нужно прогнать через <span class="inline-code">encrypt_p4g_text(...)</span>.</li>
+            <li><strong>Откуда берётся портрет</strong> <span class="inline-code">Character.YOSUKE</span> хранит стандартный bustup Йоске, поэтому в коде не нужно писать <span class="inline-code">Bustup(character_id=2, expression_id=1, costume_id=65535, position=1)</span>. Если передать <span class="inline-code">Character.YOSUKE</span> прямо в <span class="inline-code">hook.say(...)</span> или <span class="inline-code">project.message(...)</span>, портрет добавится автоматически.</li>
+          </ul>
+
+          <div class="callout warn section-stack">
+            <h3>Compile success не означает gameplay success</h3>
+            <p>Если итоговый <span class="inline-code">.bf</span> собрался, это означает только то, что синтаксис и компиляция в порядке. Это ещё не подтверждает, что выбранная процедура действительно вызывается в том игровом сценарии, который ты задумал.</p>
+          </div>
+        </section>
+
+        <section class="doc-section" id="debugging">
+          <h2>Почему мод скомпилировался, но не сработал в игре</h2>
+          <p class="lead">Это нормальная проблема для первого этапа. Ниже короткий, но жёсткий checklist. Его нужно пройти до того, как обвинять библиотеку или Reloaded II.</p>
+
+          <ul class="check-list">
+            <li>
+              <strong>Проверил ли ты саму точку входа</strong>
+              Какая процедура должна запуститься? Кто вызывает её в оригинальном скрипте? По какому действию игрока это происходит?
+            </li>
+            <li>
+              <strong>Не создал ли ты standalone script без вызова</strong>
+              Новый <span class="inline-code">.bf</span> не исполняется магически. Игра должна знать, когда перейти в этот container.
+            </li>
+            <li>
+              <strong>Правильно ли выбран режим hook</strong>
+              Иногда нужен <span class="inline-code">replace_hook</span>, иногда <span class="inline-code">soft_hook</span>, иногда <span class="inline-code">after_hook</span>. Если ты заменил критичную процедуру и не вызвал оригинал, игра поведёт себя иначе.
+            </li>
+            <li>
+              <strong>Совпадает ли путь в моде с игровым target</strong>
+              Неверный путь внутри структуры мода означает, что игра загрузит оригинальный файл, а не твой результат.
+            </li>
+            <li>
+              <strong>Не заблокировал ли мод сам себя condition-логикой</strong>
+              Часто проблема не в hook, а в том, что <span class="inline-code">bitChk(...)</span> или календарная проверка всегда дают ложь в твоём тестовом сейве.
+            </li>
+            <li>
+              <strong>Не проверяешь ли ты не тот игровой маршрут</strong>
+              Название процедуры не всегда совпадает с тем, что игрок видит в UI. Например, <span class="inline-code">call_lmap()</span> не обязан срабатывать от кнопки мини-карты.
+            </li>
+            <li>
+              <strong>Не собираешь ли ты несколько проектов одновременно</strong>
+              AtlusScriptCompiler пишет общий log-файл и может конфликтовать при параллельной компиляции. Для диагностики собирай моды последовательно.
+            </li>
+          </ul>
+
+          <div class="callout danger section-stack">
+            <h3>Практический вывод</h3>
+            <p>Сначала проверяй мод на максимально надёжной точке входа. Потом переноси ту же идею на более сложную карту, NPC или сценку. Не начинай отладку с глубоких процедур, которые трудно воспроизвести и трудно отследить.</p>
+          </div>
+        </section>
+
+        <section class="doc-section" id="next-steps">
+          <h2>Куда расти дальше</h2>
+          <p class="lead">Когда базовая цепочка уже понятна, обучение дальше строится не вокруг новых слов, а вокруг уверенного чтения оригинальных скриптов Persona 4 Golden.</p>
+
+          <div class="lesson-grid section-stack">
+            <article class="lesson-card">
+              <h3>Следующий логичный маршрут</h3>
+              <div class="lesson-index">
+                <a href="reference.html#project">1. Прочитать справочник по объектам проекта</a>
+                <a href="reference.html#hooks">2. Разобрать hooks и методы Procedure</a>
+                <a href="reference.html#expressions">3. Освоить helpers для условий</a>
+                <a href="reference.html#diagnostics">4. Использовать analyzer и doctor для диагностики</a>
+              </div>
+            </article>
+            <article class="panel">
+              <h3>Как учиться без боли</h3>
+              <p>Сначала бери существующий оригинальный скрипт, находи в нём стабильную вызываемую процедуру, делай маленький hook, убеждайся, что он реально исполняется, и только потом наращивай поведение. Такой порядок экономит больше времени, чем любые абстрактные советы.</p>
+            </article>
+          </div>
+
+          <div class="footer-note">
+            Этот учебник специально отделён от справочника. Сначала нужно понять модель игры и модели библиотеки, и только потом уже заучивать отдельные функции. Для адресного поиска переходи в <a href="reference.html"><strong>справочник API</strong></a>.
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P4GScript API Reference</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="reference">
+  <div class="site-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">API</div>
+        <h2>P4GScript Reference</h2>
+        <p>Отдельный справочник по объектам, helpers, enums и диагностическим инструментам библиотеки.</p>
+      </div>
+
+      <div class="sidebar-group">
+        <p class="sidebar-label">Разделы</p>
+        <nav class="sidebar-nav">
+          <a href="#reference-start">Что это за страница</a>
+          <a href="#project">Project и source</a>
+          <a href="#hooks">Hooks и Procedure</a>
+          <a href="#expressions">Expressions и conditions</a>
+          <a href="#messages">Messages и selections</a>
+          <a href="#enums">Enums и IDs</a>
+          <a href="#diagnostics">Diagnostics</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-group">
+        <p class="sidebar-label">Навигация</p>
+        <div class="sidebar-links">
+          <a href="index.html">Вернуться к обучению</a>
+        </div>
+      </div>
+
+      <div class="sidebar-tip">
+        <strong>Как пользоваться этой страницей</strong>
+        <p>Сначала ищешь нужный объект через фильтр и поиск. Потом читаешь справа, что это такое, зачем нужно и как выглядит реальное использование.</p>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <section class="hero" id="reference-start">
+          <div class="eyebrow">Отдельно от обучения</div>
+          <h1>Справочник pyFlowCompile</h1>
+          <p>Эта страница не пытается учить с нуля. Её задача другая: дать быстрый доступ к конкретной функции, классу, helper-выражению или диагностическому инструменту, когда ты уже знаешь, что именно ищешь. После обновления библиотеки здесь отдельно описаны и короткие constructors для field/event scripts, и повседневные helpers вроде ask(), once() и during().</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#reference-explorer">Открыть каталог API</a>
+            <a class="button secondary" href="index.html">Вернуться к урокам</a>
+          </div>
+        </section>
+        <section class="doc-section" id="project">
+          <h2>Project и source</h2>
+          <p class="lead">Это слой, который отвечает за структуру мода: какой скрипт патчится, создаётся ли новый container, какие сообщения и процедуры войдут в build, а также какие bits будут зарезервированы для мода.</p>
+          <div class="table-wrap section-stack">
+            <table>
+              <thead><tr><th>API</th><th>Когда использовать</th><th>Минимальный пример</th></tr></thead>
+              <tbody>
+                <tr><td><span class="inline-code">P4GProject.patch_script(...)</span></td><td>Патч любого существующего <span class="inline-code">.bf</span>.</td><td><span class="inline-code">P4GProject.patch_script("mod", Path("file.bf"))</span></td></tr>
+                <tr><td><span class="inline-code">P4GProject.patch_field_script(...)</span></td><td>Патч field-скрипта с готовым target path.</td><td><span class="inline-code">P4GProject.patch_field_script("mod", "f007", Path("f007.bf"))</span></td></tr>
+                <tr><td><span class="inline-code">P4GProject.new_event_script(...)</span> / <span class="inline-code">patch_event_script(...)</span></td><td>Create/patch event script с готовым target path.</td><td><span class="inline-code">P4GProject.patch_event_script("mod", "E860_074A", Path("E860_074A.bf"))</span></td></tr>
+                <tr><td><span class="inline-code">P4GProject.new_script(...)</span></td><td>Создать новый script container. Нужен внешний вызов.</td><td><span class="inline-code">P4GProject.new_script("mod", target="...")</span></td></tr>
+                <tr><td><span class="inline-code">BF</span> / <span class="inline-code">Empty</span> / <span class="inline-code">FieldBF</span> / <span class="inline-code">EventBF</span></td><td>Source helpers для patch/create mode.</td><td><span class="inline-code">SCRIPT = FieldBF("f007", Path("f007.bf"))</span></td></tr>
+                <tr><td><span class="inline-code">field_target(...)</span> / <span class="inline-code">event_target(...)</span></td><td>Собрать стандартный target path без ручной строки.</td><td><span class="inline-code">field_target("f007")</span></td></tr>
+                <tr><td><span class="inline-code">project.reserve_bit(...)</span></td><td>Выделить bit состояния мода.</td><td><span class="inline-code">done = project.reserve_bit("MOD_DONE")</span></td></tr>
+                <tr><td><span class="inline-code">project.message(...)</span></td><td>Создать отдельный message block.</td><td><span class="inline-code">msg = project.message("MOD_MSG")</span></td></tr>
+                <tr><td><span class="inline-code">project.Build(...)</span></td><td>Собрать <span class="inline-code">.flow</span>, <span class="inline-code">.msg</span> и <span class="inline-code">.bf</span>.</td><td><span class="inline-code">project.Build(Debug=True)</span></td></tr>
+                <tr><td><span class="inline-code">project.write</span> / <span class="inline-code">compile</span> / <span class="inline-code">build</span></td><td>Низкоуровневые этапы build pipeline.</td><td><span class="inline-code">project.write("out")</span></td></tr>
+                <tr><td><span class="inline-code">project.render_flow()</span> / <span class="inline-code">render_msg()</span></td><td>Посмотреть generated source без записи файлов.</td><td><span class="inline-code">print(project.render_msg())</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="doc-section" id="hooks">
+          <h2>Hooks и Procedure</h2>
+          <p class="lead">Это рабочая зона сценариста. Здесь создаются hooks, обычные процедуры и конкретные действия внутри них: вызовы native-функций, диалоги, условия, выборы, bits и переходы.</p>
+          <div class="table-wrap section-stack">
+            <table>
+              <thead><tr><th>API</th><th>Смысл</th><th>Важно</th></tr></thead>
+              <tbody>
+                <tr><td><span class="inline-code">project.replace_hook("target")</span></td><td>Создаёт <span class="inline-code">target_hook()</span>.</td><td>Оригинал вызывается только если добавить <span class="inline-code">call_original()</span>.</td></tr>
+                <tr><td><span class="inline-code">project.soft_hook("target")</span></td><td>Создаёт <span class="inline-code">target_softhook()</span>.</td><td>Подходит для before-добавок.</td></tr>
+                <tr><td><span class="inline-code">project.after_hook("target")</span></td><td>Создаёт <span class="inline-code">target_hookafter()</span>.</td><td>Подходит для действий после оригинала.</td></tr>
+                <tr><td><span class="inline-code">proc.say(...)</span></td><td>Показать короткую реплику.</td><td>Сам создаёт message block и вызовы message window.</td></tr>
+                <tr><td><span class="inline-code">proc.ask(...)</span></td><td>Показать выбор и вернуть переменную ответа.</td><td>Первый вариант имеет индекс <span class="inline-code">0</span>.</td></tr>
+                <tr><td><span class="inline-code">proc.once(bit)</span></td><td>Выполнить блок один раз.</td><td>В конце блока автоматически пишет <span class="inline-code">BIT_ON(bit)</span>.</td></tr>
+                <tr><td><span class="inline-code">proc.call("NATIVE", ...)</span></td><td>Прямой native-вызов FlowScript.</td><td>Для неизвестных вызовов нужен <span class="inline-code">safety="standard"</span>.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="doc-section" id="expressions">
+          <h2>Expressions и conditions</h2>
+          <p class="lead">Helpers этого раздела позволяют писать проверки в Python-форме, а библиотека сама переводит их в понятный FlowScript. Именно этот слой особенно полезен для режима <span class="inline-code">beginner</span>.</p>
+          <div class="table-wrap section-stack">
+            <table>
+              <thead><tr><th>Helper</th><th>Что спрашивает или делает</th><th>Рендерится как</th></tr></thead>
+              <tbody>
+                <tr><td><span class="inline-code">bitChk(done) == 0</span></td><td>Bit выключен?</td><td><span class="inline-code">BIT_CHK(done) == 0</span></td></tr>
+                <tr><td><span class="inline-code">bitOn(done)</span></td><td>Включить bit.</td><td><span class="inline-code">BIT_ON(done);</span></td></tr>
+                <tr><td><span class="inline-code">checkTimeSpan(4, 1, 5, 6) == 1</span></td><td>Дата внутри диапазона?</td><td><span class="inline-code">CHECK_TIME_SPAN(4, 1, 5, 6) == 1</span></td></tr>
+                <tr><td><span class="inline-code">timeOfDay() == TimeOfDay.DAY</span></td><td>Сейчас нужная часть дня?</td><td><span class="inline-code">GET_TIME_OF_DAY() == ...</span></td></tr>
+                <tr><td><span class="inline-code">var("choice") == 0</span></td><td>Проверить FlowScript-переменную.</td><td><span class="inline-code">choice == 0</span></td></tr>
+                <tr><td><span class="inline-code">getItem</span> / <span class="inline-code">setItem</span> / <span class="inline-code">addYen</span></td><td>Inventory/money helpers в expression-style.</td><td><span class="inline-code">proc.emit(addYen(3000))</span></td></tr>
+                <tr><td><span class="inline-code">setMsgVar(...)</span> / <span class="inline-code">msg_var(...)</span></td><td>Подготовить и вывести переменное значение в тексте.</td><td><span class="inline-code">proc.set_msg_var(0, 3000)</span></td></tr>
+                <tr><td><span class="inline-code">rawExpr(...)</span> / <span class="inline-code">callExpr(...)</span></td><td>Advanced raw expressions для standard mode.</td><td><span class="inline-code">rawExpr("SOME_NATIVE()")</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="doc-section" id="messages">
+          <h2>Messages и selections</h2>
+          <p class="lead">Здесь лежат объекты, которые отвечают за текстовые ресурсы: диалоги, строки, raw-теги и варианты выбора для игрока.</p>
+          <div class="table-wrap section-stack">
+            <table>
+              <thead><tr><th>API</th><th>Назначение</th><th>Пример</th></tr></thead>
+              <tbody>
+                <tr><td><span class="inline-code">project.message("NAME")</span></td><td>Создать <span class="inline-code">[msg NAME]</span>.</td><td><span class="inline-code">msg = project.message("MOD_MSG")</span></td></tr>
+                <tr><td><span class="inline-code">message.line("text")</span></td><td>Добавить строку в message block. Длинный текст переносится автоматически: 40 символов, максимум 3 строки.</td><td><span class="inline-code">msg.line("Привет", wrap_width=35)</span></td></tr>
+                <tr><td><span class="inline-code">auto_wrap</span> / <span class="inline-code">wrap_width</span> / <span class="inline-code">max_lines</span></td><td>Настроить автоматический перенос текста.</td><td><span class="inline-code">msg.line(text, auto_wrap=False)</span></td></tr>
+                <tr><td><span class="inline-code">project.selection("NAME")</span></td><td>Создать <span class="inline-code">[sel NAME]</span>.</td><td><span class="inline-code">sel = project.selection("MOD_CHOICE")</span></td></tr>
+                <tr><td><span class="inline-code">selection.option("text")</span></td><td>Добавить вариант выбора.</td><td><span class="inline-code">sel.option("Да")</span></td></tr>
+                <tr><td><span class="inline-code">first_name()</span> / <span class="inline-code">last_name()</span></td><td>Вставить имя или фамилию героя, введённые игроком.</td><td><span class="inline-code">hook.say(..., f"Hello, {first_name()}.")</span></td></tr>
+                <tr><td><span class="inline-code">line_break()</span> / <span class="inline-code">new_line()</span></td><td>Сделать перенос строки внутри одного диалогового окна.</td><td><span class="inline-code">msg.line(f"Первая строка{line_break()}Вторая строка")</span></td></tr>
+                <tr><td><span class="inline-code">Bustup(...)</span></td><td>Показать портрет персонажа.</td><td><span class="inline-code">Bustup.yosuke()</span> или готовый <span class="inline-code">Character.YOSUKE</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="doc-section" id="enums">
+          <h2>Enums и IDs</h2>
+          <p class="lead">Это именованные значения, которые делают код читаемым: говорящие персонажи, части дня, social stats, IDs событий, IDs field-переходов и безопасные mod bits.</p>
+          <div class="table-wrap section-stack">
+            <table>
+              <thead><tr><th>Объект</th><th>Для чего нужен</th><th>Пример</th></tr></thead>
+              <tbody>
+                <tr><td><span class="inline-code">Speaker</span></td><td>Имя говорящего без портрета.</td><td><span class="inline-code">Speaker.NANAKO</span></td></tr>
+                <tr><td><span class="inline-code">Character</span></td><td>Имя и стандартный bustup-портрет.</td><td><span class="inline-code">Character.YOSUKE</span></td></tr>
+                <tr><td><span class="inline-code">TimeOfDay</span></td><td>Читаемые части дня.</td><td><span class="inline-code">TimeOfDay.DAY</span></td></tr>
+                <tr><td><span class="inline-code">SocialStat</span></td><td>Читаемые social stat IDs.</td><td><span class="inline-code">SocialStat.COURAGE</span></td></tr>
+                <tr><td><span class="inline-code">EventId</span> / <span class="inline-code">FieldId</span></td><td>Безопасные IDs для переходов.</td><td><span class="inline-code">proc.call_event(EventId(...))</span></td></tr>
+                <tr><td><span class="inline-code">BitId</span> / <span class="inline-code">bit(...)</span></td><td>Именованные bits для состояния мода.</td><td><span class="inline-code">done = bit(9000, name="MOD_DONE")</span></td></tr>
+                <tr><td><span class="inline-code">Bustup</span> / <span class="inline-code">VoiceCue</span></td><td>Портрет и voice tag для MessageScript.</td><td><span class="inline-code">msg.line("...", voice=VoiceCue(...))</span></td></tr>
+                <tr><td><span class="inline-code">BEGINNER</span> / <span class="inline-code">STANDARD</span> / <span class="inline-code">EXPERT</span></td><td>Константы safety modes.</td><td><span class="inline-code">safety=BEGINNER</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="doc-section" id="diagnostics">
+          <h2>Diagnostics</h2>
+          <p class="lead">Когда мод компилируется, но не ведёт себя как ожидалось, на сцену выходят инструменты проверки: build-логи, manifest-файлы, анализ конфликтов и doctor-диагностика.</p>
+          <div class="table-wrap section-stack">
+            <table>
+              <thead><tr><th>Инструмент</th><th>Что проверяет</th><th>Когда смотреть</th></tr></thead>
+              <tbody>
+                <tr><td><span class="inline-code">Build(Debug=True)</span></td><td>Подробный вывод AtlusScriptTools.</td><td>Если <span class="inline-code">.bf</span> не собрался.</td></tr>
+                <tr><td><span class="inline-code">manifest.json</span></td><td>Какие файлы, imports, target path и warnings были у build.</td><td>Если Reloaded II загрузил не тот путь.</td></tr>
+                <tr><td><span class="inline-code">conflicts.txt</span></td><td>Потенциальные пересечения hooks, bits и target scripts.</td><td>Если несколько модов меняют один script container.</td></tr>
+                <tr><td><span class="inline-code">doctor</span> / analyzer</td><td>Структуру workspace и использование процедур.</td><td>Если build есть, но hook не достигается в игре.</td></tr>
+                <tr><td><span class="inline-code">build_project_file(...)</span> / <span class="inline-code">load_project_from_file(...)</span></td><td>Сборка модов из Python-файлов через tooling API.</td><td>Для batch-build и launchers.</td></tr>
+                <tr><td><span class="inline-code">CompilerConfig</span> / <span class="inline-code">BuildResult</span> / <span class="inline-code">CompileResult</span></td><td>Structured config/result objects build pipeline.</td><td>Для автоматизации и UI.</td></tr>
+                <tr><td><span class="inline-code">run_doctor</span> / <span class="inline-code">analyze_project_conflicts</span></td><td>Диагностика окружения и конфликтов проекта.</td><td>Когда мод собирается, но ведёт себя странно.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="doc-section" id="reference-explorer">
+          <h2>Каталог API</h2>
+          <p class="lead">Ниже есть два слоя справочника. Первый — статичный быстрый каталог по самым важным объектам. Второй — интерактивный explorer с поиском и фильтрами; он раскрывает подробную карточку выбранного API.</p>
+
+          <div class="callout info section-stack">
+            <h3>Если интерактивный список не загрузился</h3>
+            <p>Справочник всё равно не должен быть пустым. Используй таблицы выше и стартовую карточку справа: там перечислены основные методы проекта, hooks, сообщения, expressions и диагностические инструменты.</p>
+          </div>
+
+          <div class="reference-grid section-stack">
+            <div class="reference-shell reference-list">
+              <div class="search-row">
+                <input id="reference-search" type="search" placeholder="Например: patch_field_script, ask, once, during, Build">
+                <div class="filter-row" id="reference-category-filters">
+                  <button class="filter-chip is-active" data-filter-type="category" data-filter-value="all">Все категории</button>
+                  <button class="filter-chip" data-filter-type="category" data-filter-value="core">Project</button>
+                  <button class="filter-chip" data-filter-type="category" data-filter-value="hooks">Hooks</button>
+                  <button class="filter-chip" data-filter-type="category" data-filter-value="messages">Messages</button>
+                  <button class="filter-chip" data-filter-type="category" data-filter-value="expressions">Expressions</button>
+                  <button class="filter-chip" data-filter-type="category" data-filter-value="enums">Enums</button>
+                  <button class="filter-chip" data-filter-type="category" data-filter-value="diagnostics">Diagnostics</button>
+                </div>
+                <div class="filter-row" id="reference-level-filters">
+                  <button class="filter-chip is-active" data-filter-type="level" data-filter-value="all">Все уровни</button>
+                  <button class="filter-chip" data-filter-type="level" data-filter-value="beginner">Beginner</button>
+                  <button class="filter-chip" data-filter-type="level" data-filter-value="both">Beginner + Standard</button>
+                  <button class="filter-chip" data-filter-type="level" data-filter-value="standard">Standard</button>
+                  <button class="filter-chip" data-filter-type="level" data-filter-value="tool">Tools</button>
+                </div>
+              </div>
+
+              <div class="reference-results" id="reference-results">
+                <article class="reference-item is-active">
+                  <h3>P4GProject</h3>
+                  <p>Главный объект сборки: source, hooks, messages, bits и Build().</p>
+                </article>
+                <article class="reference-item">
+                  <h3>project.replace_hook</h3>
+                  <p>Создаёт target_hook() и требует явного call_original(), если нужен vanilla-код.</p>
+                </article>
+                <article class="reference-item">
+                  <h3>Procedure.say</h3>
+                  <p>Создаёт message block и показывает реплику через MSG(...).</p>
+                </article>
+                <article class="reference-item">
+                  <h3>Procedure.ask</h3>
+                  <p>Создаёт selection block, вызывает SEL(...) и возвращает переменную выбора.</p>
+                </article>
+                <article class="reference-item">
+                  <h3>bitChk / checkTimeSpan / timeOfDay</h3>
+                  <p>Beginner-friendly expressions для частых условий.</p>
+                </article>
+              </div>
+            </div>
+            <article class="reference-shell reference-detail" id="reference-detail">
+              <div class="detail-header">
+                <span class="badge core">Project</span>
+                <span class="badge beginner">Beginner + Standard</span>
+              </div>
+              <h2>P4GProject</h2>
+              <p class="lead">Главный объект сборки. В нём живёт будущий мод: source, hooks, процедуры, messages, selections, bits и вызов Build().</p>
+              <div class="signature">P4GProject.patch_script(name, original_bf, *, target=None, import_path=None, safety="beginner")</div>
+              <div class="detail-block">
+                <h3>Зачем нужен</h3>
+                <p>Создавай один проект на один собираемый script container. Для первых модов чаще всего нужен patch-route: оригинальный <span class="inline-code">.bf</span>, hook к реальной процедуре и итоговый patched <span class="inline-code">.bf</span>.</p>
+              </div>
+              <div class="detail-block">
+                <h3>Минимальный пример</h3>
+                <div class="code-block"><pre><code class="language-python">project = P4GProject.patch_script(
+    "hello_scheduler",
+    Path(__file__).with_name("scheduler_01.bf"),
+    target="data_e/scheduler/scheduler_01.bf",
+    import_path="original_scheduler_01.bf",
+    safety="beginner",
+)</code></pre></div>
+              </div>
+              <div class="detail-block">
+                <h3>Что получится</h3>
+                <p>Интерактивный JS-справочник заменит этот стартовый блок подробной карточкой выбранного элемента. Без JS эта карточка остаётся полезным fallback, а таблицы выше дают быстрый обзор API.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          Справочник намеренно не дублирует большой урок. Если ты ещё не уверен, как игра вообще вызывает процедуры и почему hook работает, сначала возвращайся в <a href="index.html"><strong>обучение</strong></a>, а уже потом читай отдельные элементы API.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

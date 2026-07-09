@@ -1,0 +1,24 @@
+import("python_event.msg");
+
+const int MOD_VERIFY_DONE = 9000;
+
+void MOD_VERIFY_EVENT()
+{
+    if (DATE_CHK(6, 15) == 1 && BIT_CHK(MOD_VERIFY_DONE) == 0)
+    {
+        OPEN_MSG_WIN();
+        MSG(MOD_VERIFY_HELLO);
+        int choice = SEL(MOD_VERIFY_CHOICE);
+        if (choice == 0)
+        {
+            MSG(MOD_VERIFY_YES);
+        }
+        if (choice != 0)
+        {
+            MSG(MOD_VERIFY_NO);
+        }
+        CLOSE_MSG_WIN();
+        BIT_ON(MOD_VERIFY_DONE);
+    }
+    return;
+}
